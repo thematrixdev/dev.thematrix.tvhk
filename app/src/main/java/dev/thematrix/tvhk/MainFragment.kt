@@ -23,19 +23,37 @@ class MainFragment : BrowseFragment() {
 //        isHeadersTransitionOnBackEnabled = false
     }
 
-    private fun loadRows() {
+      private fun loadRows() {
         val list = MovieList.list
 
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
         val cardPresenter = CardPresenter()
-
+//listRowAdapter mean pccw channels
         val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-        for (j in 0 until list.count()) {
-            listRowAdapter.add(list[j])
-        }
 
-        val header = HeaderItem(0, "TV")
+        listRowAdapter.add(list[0])
+        listRowAdapter.add(list[1])
+        listRowAdapter.add(list[2])
+//listRowAdapter2 mean i-cable channels
+        val listRowAdapter2 = ArrayObjectAdapter(cardPresenter)
+
+        listRowAdapter2.add(list[3])
+        listRowAdapter2.add(list[4])
+        listRowAdapter2.add(list[5])
+//listRowAdapter3 mean RTHK channels
+        val listRowAdapter3 = ArrayObjectAdapter(cardPresenter)
+
+        listRowAdapter3.add(list[6])
+        listRowAdapter3.add(list[7])
+
+
+        val header = HeaderItem(0, "PCCW")
+        val header2 = HeaderItem(1, "i-Cable")
+        val header3 = HeaderItem(2, "RTHK")
+
         rowsAdapter.add(ListRow(header, listRowAdapter))
+        rowsAdapter.add(ListRow(header2, listRowAdapter2))
+        rowsAdapter.add(ListRow(header3, listRowAdapter3))
 
         adapter = rowsAdapter
     }
