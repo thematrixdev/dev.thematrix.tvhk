@@ -135,12 +135,11 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                     try {
                         playVideo(title, JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString())
                     }catch (exception: Exception){
-                        toast.setText(title + " 暫時未能播放，請稍候再試。")
-                        toast.show()
-                        channelSwitch(lastDirection, false)
+                        showPlaybackErrorMessage(title)
                     }
                 },
                 Response.ErrorListener{ error ->
+                    showPlaybackErrorMessage(title)
                 }
             )
 
@@ -155,12 +154,11 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                     try {
                         playVideo(title, JSONObject(JSONObject(response).get("result").toString()).get("stream").toString())
                     }catch (exception: Exception){
-                        toast.setText(title + " 暫時未能播放，請稍候再試。")
-                        toast.show()
-                        channelSwitch(lastDirection, false)
+                        showPlaybackErrorMessage(title)
                     }
                 },
                 Response.ErrorListener{ error ->
+                    showPlaybackErrorMessage(title)
                 }
             ){
                 override fun getRetryPolicy(): RetryPolicy {
@@ -209,6 +207,12 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
             requestQueue.add(stringRequest)
         }
+    }
+
+    private fun showPlaybackErrorMessage(title: String){
+        toast.setText(title + " 暫時未能播放，請稍候再試。")
+        toast.show()
+        channelSwitch(lastDirection, false)
     }
 
     companion object {
