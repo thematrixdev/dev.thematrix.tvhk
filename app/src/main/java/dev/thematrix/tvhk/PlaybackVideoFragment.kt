@@ -2,6 +2,7 @@ package dev.thematrix.tvhk
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.leanback.app.VideoSupportFragment
 import androidx.leanback.app.VideoSupportFragmentGlueHost
@@ -147,12 +148,51 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                 params,
                 Response.Listener { response ->
                     try {
-                        playVideo(title, JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString())
+                        url = JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString()
+
+                        Log.d("__DEBUG__", url)
+
+                        val stringRequest = object: StringRequest(
+                            Method.GET,
+                            url,
+                            Response.Listener { response ->
+                                val res = response.toString().split("\n")
+                                val cnt = res.count()
+
+                                lateinit var highestDefinitionStreamUrl: String
+                                for (i in 1 until cnt + 1) {
+                                    if (res[cnt - i] != "") {
+                                        highestDefinitionStreamUrl = res[cnt - i]
+                                        break
+                                    }
+                                }
+
+                                var s = url.split('?')[0].split('/')
+                                var u: MutableList<String> = mutableListOf()
+                                for (i in 0 until s.count() - 1) {
+                                    u.add(s[i])
+                                }
+
+                                u.add(highestDefinitionStreamUrl)
+
+                                url = u.joinToString("/")
+
+                                Log.d("__DEBUG__", url)
+
+                                playVideo(title, url)
+                            },
+                            Response.ErrorListener{ error ->
+                            }
+                        ){}
+
+                        requestQueue.add(stringRequest)
                     }catch (exception: Exception){
+                        Log.d("__DEBUG__", "TRY EXCEPT")
                         showPlaybackErrorMessage(title)
                     }
                 },
                 Response.ErrorListener{ error ->
+                    Log.d("__DEBUG__", "RESPONSE ERROR")
                     showPlaybackErrorMessage(title)
                 }
             )
