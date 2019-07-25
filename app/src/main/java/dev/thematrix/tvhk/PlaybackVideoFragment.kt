@@ -92,27 +92,41 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     }
 
     fun playVideo(title: String, videoUrl: String) {
+        var url = videoUrl
+        if(SDK_VER < 21){
+            url = url.replace("https://", "http://")
+        }
+
         mTransportControlGlue.title = title
-        playerAdapter.setDataSource(Uri.parse(videoUrl))
+        playerAdapter.setDataSource(Uri.parse(url))
         mTransportControlGlue.playWhenPrepared()
     }
 
     private fun getVideoUrl(title: String, ch: String) {
         requestQueue.cancelAll(this)
 
+        lateinit var url: String
+
         if(ch.equals("viutv99") || ch.equals("nowtv332") || ch.equals("nowtv331")){
-            var url = ""
             val params = JSONObject()
 
             if(ch.equals("viutv99")){
-                url = "https://api.viu.now.com/p8/2/getLiveURL"
+                if(SDK_VER >= 21){
+                    url = "https://api.viu.now.com/p8/2/getLiveURL"
+                }else{
+                    url = "http://api.viu.now.com/p8/2/getLiveURL"
+                }
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
             }else{
-                url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
+                if(SDK_VER >= 21) {
+                    url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
+                }else{
+                    url = "http://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
+                }
 
                 if(ch.equals("nowtv332")){
                     params.put("channelno", "332")
@@ -147,9 +161,15 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
             requestQueue.add(jsonObjectRequest)
         }else if(ch.equals("cabletv109") || ch.equals("cabletv110")){
+            if(SDK_VER >= 21){
+                url = "https://mobileapp.i-cable.com/iCableMobile/API/api.php"
+            }else{
+                url = "http://mobileapp.i-cable.com/iCableMobile/API/api.php"
+            }
+
             val stringRequest = object: StringRequest(
                 Method.POST,
-                "https://mobileapp.i-cable.com/iCableMobile/API/api.php",
+                url,
                 Response.Listener { response ->
                     try {
                         playVideo(title, JSONObject(JSONObject(response).get("result").toString()).get("stream").toString())
@@ -216,6 +236,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     }
 
     companion object {
+        private val SDK_VER = android.os.Build.VERSION.SDK_INT
         private var currentVideoID = -1
         private lateinit var mTransportControlGlue: PlaybackTransportControlGlue<MediaPlayerAdapter>
         private lateinit var playerAdapter: MediaPlayerAdapter
