@@ -2,7 +2,6 @@ package dev.thematrix.tvhk
 
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.leanback.app.VideoSupportFragment
 import androidx.leanback.app.VideoSupportFragmentGlueHost
@@ -150,49 +149,68 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                     try {
                         url = JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString()
 
-                        Log.d("__DEBUG__", url)
+//                        val stringRequest = object: StringRequest(
+//                            Method.GET,
+//                            url,
+//                            Response.Listener { response ->
+//                                var urlParts: MutableList<String> = mutableListOf()
+//                                var s = url.split("/")
+//                                for (i in 0 until s.count() - 1) {
+//                                    urlParts.add(s[i])
+//                                }
+//                                url = urlParts.joinToString("/")
+//
+//                                val res = response.toString().split("\n")
+//
+//                                var u: MutableList<String> = mutableListOf()
+//                                var highestDefinitionBandwidth: Int = 0
+//                                var highestDefinitionStreamMeta: String = ""
+//                                var highestDefinitionStreamUrl: String = ""
+//
+//                                for (i in 0 until res.count()) {
+//                                    var strlen = res[i].length
+//                                    if (strlen > 13 && res[i].substring(0, 13) == "#EXT-X-MEDIA:") {
+//                                        if (res[i].indexOf("DEFAULT=YES", ignoreCase = true) > -1) {
+//                                            u.add(res[i].replace("URI=\"", "URI=\"" + url + "/"))
+//                                        }
+//                                    } else if (strlen > 18 && res[i].substring(0, 18) == "#EXT-X-STREAM-INF:") {
+//                                        var params = res[i].substring(18).split(",")
+//
+//                                        params.forEach{
+//                                            var param = it.split("=")
+//                                            if (param[0] == "BANDWIDTH") {
+//                                                val bandwidth = param[1].toInt()
+//                                                if (bandwidth > highestDefinitionBandwidth) {
+//                                                    highestDefinitionBandwidth = bandwidth
+//                                                    highestDefinitionStreamMeta = res[i]
+//                                                    highestDefinitionStreamUrl = url + "/" + res[i + 1]
+//                                                }
+//
+//                                                return@forEach
+//                                            }
+//                                        }
+//                                    }else if (strlen > 1 && res[i].substring(0, 1) == "#") {
+//                                        u.add(res[i])
+//                                    }
+//                                }
+//
+//                                u.add(highestDefinitionStreamMeta)
+//                                u.add(highestDefinitionStreamUrl)
+//
+//                                val m3u8 = u.joinToString("\n")
+//                            },
+//                            Response.ErrorListener{ error ->
+//                            }
+//                        ){}
+//
+//                        requestQueue.add(stringRequest)
 
-                        val stringRequest = object: StringRequest(
-                            Method.GET,
-                            url,
-                            Response.Listener { response ->
-                                val res = response.toString().split("\n")
-                                val cnt = res.count()
-
-                                lateinit var highestDefinitionStreamUrl: String
-                                for (i in 1 until cnt + 1) {
-                                    if (res[cnt - i] != "") {
-                                        highestDefinitionStreamUrl = res[cnt - i]
-                                        break
-                                    }
-                                }
-
-                                var s = url.split('?')[0].split('/')
-                                var u: MutableList<String> = mutableListOf()
-                                for (i in 0 until s.count() - 1) {
-                                    u.add(s[i])
-                                }
-
-                                u.add(highestDefinitionStreamUrl)
-
-                                url = u.joinToString("/")
-
-                                Log.d("__DEBUG__", url)
-
-                                playVideo(title, url)
-                            },
-                            Response.ErrorListener{ error ->
-                            }
-                        ){}
-
-                        requestQueue.add(stringRequest)
+                        playVideo(title, url)
                     }catch (exception: Exception){
-                        Log.d("__DEBUG__", "TRY EXCEPT")
                         showPlaybackErrorMessage(title)
                     }
                 },
                 Response.ErrorListener{ error ->
-                    Log.d("__DEBUG__", "RESPONSE ERROR")
                     showPlaybackErrorMessage(title)
                 }
             )
