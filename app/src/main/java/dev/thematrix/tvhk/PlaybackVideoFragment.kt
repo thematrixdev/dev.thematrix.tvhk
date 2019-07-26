@@ -106,14 +106,14 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             val params = JSONObject()
 
             if(ch.equals("viutv99")){
-                url = handleUrl("https://api.viu.now.com/p8/2/getLiveURL")
+                url = "https://api.viu.now.com/p8/2/getLiveURL"
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
             }else{
-                url = handleUrl("https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL")
+                url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
 
                 if(ch.equals("nowtv332")){
                     params.put("channelno", "332")
@@ -134,18 +134,34 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                 params,
                 Response.Listener { response ->
                     try {
-                        url = JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString()
+                        var mediaUrl: String = JSONArray(JSONObject(JSONObject(response.get("asset").toString()).get("hls").toString()).get("adaptive").toString()).get(0).toString()
+
+                        // Enable token
+
+                        val stringRequest = object: StringRequest(
+                            Method.GET,
+                            mediaUrl,
+                            Response.Listener { response ->
+                                // Remove param
+                                mediaUrl = mediaUrl.split("?")[0]
+                            },
+                            Response.ErrorListener{ error ->
+                            }
+                        ){}
+
+                        requestQueue.add(stringRequest)
+
 
 //                        val stringRequest = object: StringRequest(
 //                            Method.GET,
-//                            url,
+//                            mediaUrl,
 //                            Response.Listener { response ->
 //                                var urlParts: MutableList<String> = mutableListOf()
-//                                var s = url.split("/")
+//                                var s = mediaUrl.split("/")
 //                                for (i in 0 until s.count() - 1) {
 //                                    urlParts.add(s[i])
 //                                }
-//                                url = urlParts.joinToString("/")
+//                                mediaUrl = urlParts.joinToString("/")
 //
 //                                val res = response.toString().split("\n")
 //
@@ -158,7 +174,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 //                                    var strlen = res[i].length
 //                                    if (strlen > 13 && res[i].substring(0, 13) == "#EXT-X-MEDIA:") {
 //                                        if (res[i].indexOf("DEFAULT=YES", ignoreCase = true) > -1) {
-//                                            u.add(res[i].replace("URI=\"", "URI=\"" + url + "/"))
+//                                            u.add(res[i].replace("URI=\"", "URI=\"" + mediaUrl + "/"))
 //                                        }
 //                                    } else if (strlen > 18 && res[i].substring(0, 18) == "#EXT-X-STREAM-INF:") {
 //                                        var params = res[i].substring(18).split(",")
@@ -170,7 +186,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 //                                                if (bandwidth > highestDefinitionBandwidth) {
 //                                                    highestDefinitionBandwidth = bandwidth
 //                                                    highestDefinitionStreamMeta = res[i]
-//                                                    highestDefinitionStreamUrl = url + "/" + res[i + 1]
+//                                                    highestDefinitionStreamUrl = mediaUrl + "/" + res[i + 1]
 //                                                }
 //
 //                                                return@forEach
@@ -192,7 +208,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 //
 //                        requestQueue.add(stringRequest)
 
-                        playVideo(title, url)
+                        playVideo(title, mediaUrl)
                     }catch (exception: Exception){
                         showPlaybackErrorMessage(title)
                     }
@@ -206,7 +222,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
             requestQueue.add(jsonObjectRequest)
         }else if(ch.equals("cabletv109") || ch.equals("cabletv110")){
-            url = handleUrl("https://mobileapp.i-cable.com/iCableMobile/API/api.php")
+            url = "https://mobileapp.i-cable.com/iCableMobile/API/api.php"
 
             val stringRequest = object: StringRequest(
                 Method.POST,
