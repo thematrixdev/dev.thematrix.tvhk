@@ -92,13 +92,8 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     }
 
     fun playVideo(title: String, videoUrl: String) {
-        var url = videoUrl
-        if(SDK_VER < 21){
-            url = url.replace("https://", "http://")
-        }
-
         mTransportControlGlue.title = title
-        playerAdapter.setDataSource(Uri.parse(url))
+        playerAdapter.setDataSource(Uri.parse(handleUrl(videoUrl)))
         mTransportControlGlue.playWhenPrepared()
     }
 
@@ -111,22 +106,14 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             val params = JSONObject()
 
             if(ch.equals("viutv99")){
-                if(SDK_VER >= 21){
-                    url = "https://api.viu.now.com/p8/2/getLiveURL"
-                }else{
-                    url = "http://api.viu.now.com/p8/2/getLiveURL"
-                }
+                url = handleUrl("https://api.viu.now.com/p8/2/getLiveURL")
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
             }else{
-                if(SDK_VER >= 21) {
-                    url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
-                }else{
-                    url = "http://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
-                }
+                url = handleUrl("https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL")
 
                 if(ch.equals("nowtv332")){
                     params.put("channelno", "332")
@@ -219,11 +206,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
             requestQueue.add(jsonObjectRequest)
         }else if(ch.equals("cabletv109") || ch.equals("cabletv110")){
-            if(SDK_VER >= 21){
-                url = "https://mobileapp.i-cable.com/iCableMobile/API/api.php"
-            }else{
-                url = "http://mobileapp.i-cable.com/iCableMobile/API/api.php"
-            }
+            url = handleUrl("https://mobileapp.i-cable.com/iCableMobile/API/api.php")
 
             val stringRequest = object: StringRequest(
                 Method.POST,
@@ -284,6 +267,14 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             }
 
             requestQueue.add(stringRequest)
+        }
+    }
+
+    private fun handleUrl(url: String): String{
+        if(SDK_VER < 21){
+            return url.replace("https://", "http://")
+        }else{
+            return url
         }
     }
 
