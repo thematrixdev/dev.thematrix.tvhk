@@ -19,6 +19,36 @@ class PlaybackActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
+    override fun onPause() {
+        super.onPause()
+
+        saveState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        restoreState()
+    }
+
+    private fun saveState(){
+        SharedPreference(this).saveInt("currentVideoID", PlaybackVideoFragment.currentVideoID)
+        PlaybackVideoFragment.currentVideoID = -1
+    }
+
+    private fun restoreState(){
+        val currentVideoID = SharedPreference(this).getInt("currentVideoID")
+
+        if(currentVideoID > -1){
+            PlaybackVideoFragment().prepareVideo(
+                MovieList.list[currentVideoID].id,
+                MovieList.list[currentVideoID].title,
+                MovieList.list[currentVideoID].videoUrl,
+                MovieList.list[currentVideoID].func
+            )
+        }
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         lateinit var direction: String
 

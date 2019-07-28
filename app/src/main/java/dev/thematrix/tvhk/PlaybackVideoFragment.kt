@@ -81,13 +81,15 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         prepareVideo(item.id, item.title, item.videoUrl, item.func)
     }
 
-    private fun prepareVideo(id: Int, title: String, videoUrl: String, func: String){
-        currentVideoID = id
+    fun prepareVideo(id: Int, title: String, videoUrl: String, func: String){
+        if(id != currentVideoID){
+            currentVideoID = id
 
-        if(videoUrl.equals("")){
-            getVideoUrl(title, func)
-        }else{
-            playVideo(title, videoUrl)
+            if(videoUrl.equals("")){
+                getVideoUrl(title, func)
+            }else{
+                playVideo(title, videoUrl)
+            }
         }
     }
 
@@ -286,7 +288,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
     companion object {
         private val SDK_VER = android.os.Build.VERSION.SDK_INT
-        private var currentVideoID = -1
+        var currentVideoID = -1
         private lateinit var mTransportControlGlue: PlaybackTransportControlGlue<MediaPlayerAdapter>
         private lateinit var playerAdapter: MediaPlayerAdapter
         private lateinit var requestQueue: RequestQueue

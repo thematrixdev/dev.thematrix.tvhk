@@ -1,6 +1,7 @@
 package dev.thematrix.tvhk
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
@@ -16,6 +17,7 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         setUpSSL()
+        restoreState()
     }
 
     private fun setUpSSL() {
@@ -38,6 +40,16 @@ class MainActivity : Activity() {
             Toast.makeText(this, "系統沒有 Google Play Service", Toast.LENGTH_SHORT).show()
         } catch (e: GooglePlayServicesRepairableException) {
             Toast.makeText(this, "Google Play Service 錯誤", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun restoreState(){
+        val currentVideoID = SharedPreference(this).getInt("currentVideoID")
+
+        if(currentVideoID > -1) {
+            val intent = Intent(this, PlaybackActivity::class.java)
+            intent.putExtra(DetailsActivity.MOVIE, MovieList.list[currentVideoID])
+            startActivity(intent)
         }
     }
 }
