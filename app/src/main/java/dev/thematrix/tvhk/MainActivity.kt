@@ -1,8 +1,14 @@
 package dev.thematrix.tvhk
 
 import android.app.Activity
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
@@ -10,6 +16,9 @@ import com.google.android.gms.security.ProviderInstaller
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
+import java.io.File
+
+
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +26,9 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         setUpSSL()
-        restoreState()
+        downloadUpdate()
+
+//        restoreState()
     }
 
     private fun setUpSSL() {
@@ -43,13 +54,43 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun restoreState(){
+    private fun downloadUpdate() {
+        registerReceiver(onDownloadComplete(), IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+
+        val file = File(getExternalFilesDir(null), "app-release.apk")
+        val request = DownloadManager.Request(Uri.parse("https://thematrix.dev/tvhk/app-release.apk"))
+            .setTitle("Updating TVHK")
+            .setDescription("Just a moment...")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+            .setDestinationUri(Uri.fromFile(file))
+
+        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        downloadId = downloadManager.enqueue(request)
+
+        Log.d("__DEBUG__", "Download started")
+    }
+
+    private class onDownloadComplete : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+
+            if (downloadId == id) {
+                Log.d("__DEBUG__", "Download completed")
+            }
+        }
+    }
+
+    private fun restoreState() {
         val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
-        if(currentVideoID > -1) {
+        if (currentVideoID > -1) {
             val intent = Intent(this, PlaybackActivity::class.java)
             intent.putExtra(DetailsActivity.MOVIE, MovieList.list[currentVideoID])
             startActivity(intent)
         }
+    }
+
+    companion object {
+        private var downloadId: Long = -1
     }
 }
