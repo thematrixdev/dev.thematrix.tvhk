@@ -10,9 +10,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.toolbox.BasicNetwork
+import com.android.volley.toolbox.HurlStack
+import com.android.volley.toolbox.NoCache
+import com.android.volley.toolbox.StringRequest
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
+import org.json.JSONObject
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
@@ -26,8 +33,8 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         setUpSSL()
-        downloadUpdate()
-
+        checkUpdate()
+//        downloadUpdate()
 //        restoreState()
     }
 
@@ -52,6 +59,29 @@ class MainActivity : Activity() {
         } catch (e: GooglePlayServicesRepairableException) {
             Toast.makeText(this, "Google Play Service 錯誤", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun checkUpdate(){
+        val stringRequest = object: StringRequest(
+            Method.GET,
+            "https://thematrix.dev/tvhk/release.htm",
+            Response.Listener { response ->
+                val packageInfo = packageManager.getPackageInfo(packageName, 0)
+                val versionCode = packageInfo.versionCode
+
+                if(response.trim().toInt() > versionCode){
+                    Log.d("__DEBUG__", "Update is available")
+                }
+            },
+            Response.ErrorListener{ error ->
+            }
+        ){}
+
+        val requestQueue = RequestQueue(NoCache(), BasicNetwork(HurlStack())).apply {
+            start()
+        }
+
+        requestQueue.add(stringRequest)
     }
 
     private fun downloadUpdate() {
