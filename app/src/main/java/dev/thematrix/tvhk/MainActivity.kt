@@ -19,12 +19,10 @@ import com.android.volley.toolbox.StringRequest
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
-import org.json.JSONObject
+import java.io.File
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
-import java.io.File
-
 
 
 class MainActivity : Activity() {
@@ -33,9 +31,9 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         setUpSSL()
-        checkUpdate()
+//        checkUpdate()
 //        downloadUpdate()
-//        restoreState()
+        restoreState()
     }
 
     private fun setUpSSL() {
@@ -114,6 +112,8 @@ class MainActivity : Activity() {
         val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
         if (currentVideoID > -1) {
+            SharedPreference(this).saveInt("currentVideoID", -1)
+
             val intent = Intent(this, PlaybackActivity::class.java)
             intent.putExtra(DetailsActivity.MOVIE, MovieList.list[currentVideoID])
             startActivity(intent)

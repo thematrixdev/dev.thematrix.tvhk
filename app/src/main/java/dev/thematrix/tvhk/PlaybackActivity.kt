@@ -21,13 +21,11 @@ class PlaybackActivity : FragmentActivity() {
 
     override fun onPause() {
         super.onPause()
-
         saveState()
     }
 
     override fun onResume() {
         super.onResume()
-
         restoreState()
     }
 
@@ -40,6 +38,8 @@ class PlaybackActivity : FragmentActivity() {
         val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
         if(currentVideoID > -1){
+            SharedPreference(this).saveInt("currentVideoID", -1)
+
             PlaybackVideoFragment().prepareVideo(
                 MovieList.list[currentVideoID].id,
                 MovieList.list[currentVideoID].title,

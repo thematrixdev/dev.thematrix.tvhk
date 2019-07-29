@@ -62,6 +62,8 @@ class MainFragment : BrowseFragment() {
             row: Row
         ) {
             if (item is Movie) {
+                SharedPreference(activity).saveInt("currentVideoID", -1)
+
                 val intent = Intent(activity, PlaybackActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, item)
                 startActivity(intent)
