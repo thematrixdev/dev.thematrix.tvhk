@@ -29,7 +29,6 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
 import java.io.File
 import java.security.KeyManagementException
-import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
 
 class MainActivity : Activity() {
@@ -41,6 +40,7 @@ class MainActivity : Activity() {
 
         setUpSSL()
         handleAutoUpdate()
+        handlePreferences()
         restoreState()
     }
 
@@ -196,15 +196,41 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun handlePreferences(){
+        playerType = SharedPreference(this).getInt("playerType")
+        if(playerType == -1){
+            val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+            builder.setTitle("選擇播放器")
+            builder.setMessage("Android 5 或以上用戶，建議使用內置播放器。Android 4 用戶如遇到不能播放的頻道，建議使用外置播放器 (推薦 MX Player)。使用外置播放器將不能使用方向鍵轉台。如不確定，遲下再講，試用內置播放器。")
+
+            builder.setPositiveButton("內置播放器") { dialog, which ->
+                playerType = playerUseInternal
+                SharedPreference(this).saveInt("playerType", playerType)
+            }
+
+            builder.setNegativeButton("外置播放器") { dialog, which ->
+                playerType = playerUseExternal
+                SharedPreference(this).saveInt("playerType", playerType)
+            }
+
+            builder.setNeutralButton("遲下再講") { dialog, which ->
+                playerType = playerUseUnknown
+                SharedPreference(this).saveInt("playerType", playerType)
+            }
+
+            builder.show()
+        }
+    }
+
     private fun restoreState() {
-        val currentVideoID = SharedPreference(this).getInt("currentVideoID")
+        if(playerType > -1){
+            val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
-        if (currentVideoID > -1) {
-            SharedPreference(this).saveInt("currentVideoID", -1)
+            if (currentVideoID > -1) {
+//                SharedPreference(this).saveInt("currentVideoID", -1)
 
-            val intent = Intent(this, PlaybackActivity::class.java)
-            intent.putExtra(DetailsActivity.MOVIE, MovieList.list[currentVideoID])
-            startActivity(intent)
+                MainFragment().play(MovieList.list[currentVideoID])
+            }
         }
     }
 
@@ -215,5 +241,9 @@ class MainActivity : Activity() {
         private var hasPermission: Boolean = false
         private lateinit var downloadManager: DownloadManager
         private var downloadId: Long = -1
+        var playerType: Int = -1
+        var playerUseUnknown: Int = -1
+        var playerUseInternal: Int = 0
+        var playerUseExternal: Int = 1
     }
 }

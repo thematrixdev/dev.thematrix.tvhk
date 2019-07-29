@@ -1,6 +1,7 @@
 package dev.thematrix.tvhk
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.leanback.app.BrowseFragment
@@ -11,9 +12,7 @@ class MainFragment : BrowseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         setupUIElements()
-
         loadRows()
-
         setupEventListeners()
     }
 
@@ -62,13 +61,37 @@ class MainFragment : BrowseFragment() {
             row: Row
         ) {
             if (item is Movie) {
-                SharedPreference(activity).saveInt("currentVideoID", -1)
+                play(item)
+            } else if (item is String) {
+                Toast.makeText(activity, item, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun play(item: Movie){
+        try {
+            var currentVideoId: Int
+
+            if(MainActivity.playerType == MainActivity.playerUseExternal){
+                currentVideoId = item.id
+
+                val playIntent: Intent = Uri.parse(item.videoUrl).let { uri->
+                    Intent(Intent.ACTION_VIEW, uri)
+                }
+
+                startActivity(playIntent)
+            }else{
+                currentVideoId = -1
 
                 val intent = Intent(activity, PlaybackActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, item)
                 startActivity(intent)
-            } else if (item is String) {
-                Toast.makeText(activity, item, Toast.LENGTH_SHORT).show()
+            }
+
+            SharedPreference(activity).saveInt("currentVideoID", currentVideoId)
+        }catch (e: Exception){
+            if(e.message.toString().indexOf("No Activity found to handle Intent") > -1){
+                Toast.makeText(activity, "請先安裝媒體播放器，建議使用 MX Player", Toast.LENGTH_SHORT).show()
             }
         }
     }
