@@ -16,6 +16,6 @@ class SharedPreference(val context: Context) {
     }
 
     fun getInt(KEY_NAME: String): Int {
-        return sharedPref.getInt(KEY_NAME, 0)
+        return sharedPref.getInt(KEY_NAME, -1)
     }
 }
