@@ -40,8 +40,7 @@ class MainActivity : Activity() {
         ctx = this
 
         setupNetwork()
-        handleAutoUpdate()
-        handlePreferences()
+        initialize()
     }
 
     private fun setupNetwork(){
@@ -63,36 +62,6 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun handleAutoUpdate(){
-        if(hasPlaystore) {
-            return
-        }
-
-        val PERM_READ_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-        val PERM_WRITE_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
-        if (PERM_READ_EXTERNAL_STORAGE == PackageManager.PERMISSION_GRANTED && PERM_WRITE_EXTERNAL_STORAGE == PackageManager.PERMISSION_GRANTED) {
-            hasPermission = true
-            checkUpdate()
-        }else{
-            val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
-            builder.setTitle("TVHK")
-            builder.setMessage("由於系統沒有Google Play Service，需要額外權限下載更新")
-
-            builder.setPositiveButton(android.R.string.yes) { dialog, which ->
-                ActivityCompat.requestPermissions(this, arrayOf(
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ), permissionRequestCode)
-            }
-
-            builder.setNegativeButton(android.R.string.no) { dialog, which ->
-            }
-
-            builder.show()
-        }
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
             permissionRequestCode -> {
@@ -106,7 +75,7 @@ class MainActivity : Activity() {
     private fun checkUpdate(){
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET,
-            "https://thematrix.dev/tvhk/release.htm",
+            "https://thematrix.dev/tvhk/release.json",
             null,
             Response.Listener { response ->
                 val packageInfo = packageManager.getPackageInfo(packageName, 0)
@@ -125,6 +94,8 @@ class MainActivity : Activity() {
                     }
 
                     builder.show()
+                }else{
+                    initialize()
                 }
             },
             Response.ErrorListener{ error ->
@@ -178,10 +149,39 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun handlePreferences(){
+    private fun initialize() {
         lastShownDialog++
 
         if (lastShownDialog == 0) {
+            if(hasPlaystore) {
+                initialize()
+            }else{
+                val PERM_READ_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                val PERM_WRITE_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+                if (PERM_READ_EXTERNAL_STORAGE == PackageManager.PERMISSION_GRANTED && PERM_WRITE_EXTERNAL_STORAGE == PackageManager.PERMISSION_GRANTED) {
+                    hasPermission = true
+                    checkUpdate()
+                }else{
+                    val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+                    builder.setTitle("TVHK")
+                    builder.setMessage("由於系統沒有Google Play Service，需要額外權限下載更新")
+
+                    builder.setPositiveButton("授權下載更新") { dialog, which ->
+                        ActivityCompat.requestPermissions(this, arrayOf(
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ), permissionRequestCode)
+                    }
+
+                    builder.setNegativeButton("不了") { dialog, which ->
+                        initialize()
+                    }
+
+                    builder.show()
+                }
+            }
+        }else if (lastShownDialog == 1) {
             playerType = SharedPreference(this).getInt("playerType")
             if (playerType == -1) {
                 val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
@@ -198,24 +198,24 @@ class MainActivity : Activity() {
                 builder.setPositiveButton("內置播放器") { dialog, which ->
                     playerType = playerUseInternal
                     SharedPreference(this).saveInt("playerType", playerType)
-                    handlePreferences()
+                    initialize()
                 }
 
                 builder.setNegativeButton("外置播放器") { dialog, which ->
                     playerType = playerUseExternal
                     SharedPreference(this).saveInt("playerType", playerType)
-                    handlePreferences()
+                    initialize()
                 }
 
                 builder.setNeutralButton("遲下再講") { dialog, which ->
                     playerType = playerUseUnknown
                     SharedPreference(this).saveInt("playerType", playerType)
-                    handlePreferences()
+                    initialize()
                 }
 
                 builder.show()
             }
-        } else if (lastShownDialog == 1) {
+        } else if (lastShownDialog == 2) {
             copyUrlToClipboard = SharedPreference(this).getInt("copyUrlToClipboard")
             if (copyUrlToClipboard == -1) {
                 val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
@@ -225,13 +225,13 @@ class MainActivity : Activity() {
                 builder.setPositiveButton("好") { dialog, which ->
                     copyUrlToClipboard = doCopyUrlToClipboard
                     SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
-                    handlePreferences()
+                    initialize()
                 }
 
                 builder.setNegativeButton("不了") { dialog, which ->
                     copyUrlToClipboard = dontCopyUrlToClipboard
                     SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
-                    handlePreferences()
+                    initialize()
                 }
 
                 builder.show()
