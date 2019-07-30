@@ -29,6 +29,7 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
 import java.io.File
 import java.security.KeyManagementException
+import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
 
 class MainActivity : Activity() {
@@ -38,13 +39,12 @@ class MainActivity : Activity() {
 
         ctx = this
 
-        setUpSSL()
+        setupNetwork()
         handleAutoUpdate()
         handlePreferences()
-        restoreState()
     }
 
-    private fun setUpSSL() {
+    private fun setupNetwork(){
         try {
             ProviderInstaller.installIfNeeded(applicationContext)
             var sslContext: SSLContext? = null
@@ -53,33 +53,15 @@ class MainActivity : Activity() {
                 sslContext!!.init(null, null, null)
                 val engine = sslContext.createSSLEngine()
                 engine.enabledCipherSuites
-
-//                Toast.makeText(this, "強制使用 TLSv1.2", Toast.LENGTH_SHORT).show()
             } catch (e: KeyManagementException) {
-//                Toast.makeText(this, "強制使用 TLSv1.2 失敗", Toast.LENGTH_SHORT).show()
             }
-//        } catch (e: NoSuchAlgorithmException) {
-//            Toast.makeText(this, "系統沒有 TLSv1.2", Toast.LENGTH_SHORT).show()
+        } catch (e: NoSuchAlgorithmException) {
         } catch (e: GooglePlayServicesNotAvailableException) {
             hasPlaystore = false
-//            Toast.makeText(this, "系統沒有 Google Play Service", Toast.LENGTH_SHORT).show()
         } catch (e: GooglePlayServicesRepairableException) {
             hasPlaystore = false
-//            Toast.makeText(this, "Google Play Service 錯誤", Toast.LENGTH_SHORT).show()
         }
     }
-
-//    private fun isPackageInstalled(packageName: String, packageManager: PackageManager): Boolean {
-//        var found = true
-//
-//        try {
-//            packageManager.getPackageInfo(packageName, 0)
-//        } catch (e: PackageManager.NameNotFoundException) {
-//            found = false
-//        }
-//
-//        return found
-//    }
 
     private fun handleAutoUpdate(){
         if(hasPlaystore) {
@@ -222,25 +204,15 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun restoreState() {
-        if(playerType > -1){
-            val currentVideoID = SharedPreference(this).getInt("currentVideoID")
-
-            if (currentVideoID > -1) {
-//                SharedPreference(this).saveInt("currentVideoID", -1)
-
-                MainFragment().play(MovieList.list[currentVideoID])
-            }
-        }
-    }
-
     companion object {
         lateinit var ctx: Context
+
         private var hasPlaystore: Boolean = true
         private val permissionRequestCode = 689777
         private var hasPermission: Boolean = false
         private lateinit var downloadManager: DownloadManager
         private var downloadId: Long = -1
+
         var playerType: Int = -1
         var playerUseUnknown: Int = -1
         var playerUseInternal: Int = 0

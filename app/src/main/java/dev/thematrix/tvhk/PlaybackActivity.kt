@@ -1,5 +1,7 @@
 package dev.thematrix.tvhk
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
@@ -16,6 +18,8 @@ class PlaybackActivity : FragmentActivity() {
                 .commit()
         }
 
+        paused = false
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
@@ -30,22 +34,15 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     private fun saveState(){
-        SharedPreference(this).saveInt("currentVideoID", PlaybackVideoFragment.currentVideoID)
-        PlaybackVideoFragment.currentVideoID = -1
+        paused = true
     }
 
     private fun restoreState(){
-        val currentVideoID = SharedPreference(this).getInt("currentVideoID")
-
-        if(currentVideoID > -1){
-            SharedPreference(this).saveInt("currentVideoID", -1)
-
-            PlaybackVideoFragment().prepareVideo(
-                MovieList.list[currentVideoID].id,
-                MovieList.list[currentVideoID].title,
-                MovieList.list[currentVideoID].videoUrl,
-                MovieList.list[currentVideoID].func
-            )
+        if(paused){
+            val intent = Intent()
+            intent.putExtra("action", "restore")
+            this.setResult(Activity.RESULT_OK, intent)
+            finish()
         }
     }
 
@@ -81,9 +78,22 @@ class PlaybackActivity : FragmentActivity() {
         }
 
         if(event.action == KeyEvent.ACTION_UP){
-            PlaybackVideoFragment().channelSwitch(direction, true)
+            channelSwitch(direction, true)
         }
 
         return true
+    }
+
+    fun channelSwitch(direction: String, showMessage: Boolean){
+        val intent = Intent()
+        intent.putExtra("action", "switch")
+        intent.putExtra("direction", direction)
+        intent.putExtra("showMessage", showMessage)
+        this.setResult(Activity.RESULT_OK, intent)
+        finish()
+    }
+
+    companion object{
+        private var paused: Boolean = false
     }
 }
