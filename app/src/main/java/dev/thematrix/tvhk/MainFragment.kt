@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.leanback.app.BrowseFragment
 import androidx.leanback.widget.*
@@ -18,10 +17,9 @@ class MainFragment : BrowseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         setupUIElements()
-        loadRows()
-        setupEventListeners()
+
         setupNetwork()
-        restoreState()
+        detectLocation()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -40,6 +38,13 @@ class MainFragment : BrowseFragment() {
         }
     }
 
+    private fun continueInitialization(){
+        loadRows()
+        setupEventListeners()
+
+        restoreState()
+    }
+
     private fun setupUIElements() {
         title = getString(R.string.app_name)
         badgeDrawable = activity.resources.getDrawable(R.drawable.transparentbanner)
@@ -51,17 +56,25 @@ class MainFragment : BrowseFragment() {
 
         lateinit var header: HeaderItem
         var listRowAdapter = ArrayObjectAdapter(cardPresenter)
+        var lastCategoryId: Int = -1
         for (i in 0 until MovieList.list.count()) {
-            if (i % 3 == 0) {
-                if(listRowAdapter.size() > 0){
-                    rowsAdapter.add(ListRow(header, listRowAdapter))
+            if (
+                !MovieList.list[i].hongkongonly ||
+                (MovieList.list[i].hongkongonly && (location == "HK" || location == ""))
+            ) {
+                if (MovieList.list[i].categoryId > lastCategoryId){
+                    if(listRowAdapter.size() > 0){
+                        rowsAdapter.add(ListRow(header, listRowAdapter))
+                    }
+
+                    header = HeaderItem(i.toLong(), MovieList.CATEGORY[ MovieList.list[i].categoryId ])
+                    listRowAdapter = ArrayObjectAdapter(cardPresenter)
                 }
 
-                header = HeaderItem(i.toLong(), MovieList.CATEGORY[i / 3])
-                listRowAdapter = ArrayObjectAdapter(cardPresenter)
-            }
+                listRowAdapter.add(MovieList.list[i])
 
-            listRowAdapter.add(MovieList.list[i])
+                lastCategoryId = MovieList.list[i].categoryId
+            }
         }
 
         if(listRowAdapter.size() > 0){
@@ -96,6 +109,28 @@ class MainFragment : BrowseFragment() {
         }
     }
 
+    private fun detectLocation(){
+        val stringRequest = object: StringRequest(
+            Method.GET,
+            "https://ifconfig.co/country-iso",
+            Response.Listener { response ->
+                location = response.trim()
+
+                if (location != "HK") {
+                    Toast.makeText(activity, "偵測位置不在香港\n部分頻道因無法播放已被隱藏", Toast.LENGTH_LONG).show()
+                }
+
+                continueInitialization()
+            },
+            Response.ErrorListener{ error ->
+                location = ""
+                continueInitialization()
+            }
+        ){}
+
+        requestQueue.add(stringRequest)
+    }
+
     private fun restoreState() {
         if(MainActivity.playerType > -1){
             val currentVideoID = SharedPreference(activity).getInt("currentVideoID")
@@ -108,8 +143,10 @@ class MainFragment : BrowseFragment() {
 
     fun prepareVideo(item: Movie){
         currentVideoID = item.id
-        SharedPreference(activity).saveInt("currentVideoID", currentVideoID)
 
+        if(MainActivity.playerType != MainActivity.playerUseInternal){
+            SharedPreference(activity).saveInt("currentVideoID", currentVideoID)
+        }
 
         if(item.videoUrl == ""){
             getVideoUrl(item)
@@ -294,6 +331,7 @@ class MainFragment : BrowseFragment() {
 
     companion object {
         private lateinit var requestQueue: RequestQueue
+        private lateinit var location: String
         var currentVideoID = -1
         private var lastDirection = "NEXT"
     }

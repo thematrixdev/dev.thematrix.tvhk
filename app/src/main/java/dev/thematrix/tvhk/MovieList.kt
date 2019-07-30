@@ -14,6 +14,17 @@ object MovieList {
     private var count: Int = 0
 
     private fun setupMovies(): List<Movie> {
+        val categoryId = arrayOf(
+            0,
+            0,
+            0,
+            1,
+            1,
+            1,
+            2,
+            2
+        )
+
         val title = arrayOf(
             "ViuTV",
             "now新聞台",
@@ -69,13 +80,26 @@ object MovieList {
             ""
         )
 
+        val hongkongonly = arrayOf(
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false
+        )
+
         val list = title.indices.map {
             buildMovieInfo(
+                categoryId[it],
                 title[it],
                 description[it],
                 cardImageUrl[it],
                 videoUrl[it],
-                func[it]
+                func[it],
+                hongkongonly[it]
             )
         }
 
@@ -83,19 +107,24 @@ object MovieList {
     }
 
     private fun buildMovieInfo(
+        categoryId: Int,
         title: String,
         description: String,
         cardImageUrl: String,
         videoUrl: String,
-        func: String
+        func: String,
+        hongkongonly: Boolean
     ): Movie {
         val movie = Movie()
+
         movie.id = count++
+        movie.categoryId = categoryId
         movie.title = title
         movie.description = description
         movie.cardImageUrl = cardImageUrl
         movie.videoUrl = videoUrl
         movie.func = func
+        movie.hongkongonly = hongkongonly
 
         return movie
     }

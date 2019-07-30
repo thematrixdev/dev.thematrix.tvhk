@@ -12,18 +12,18 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val (_, title, _, _, videoUrl, _) = activity?.intent?.getSerializableExtra("item") as Movie
+        val item = activity?.intent?.getSerializableExtra("item") as Movie
 
         var url: String
-        if(videoUrl != ""){
-            url = videoUrl
+        if(item.videoUrl != ""){
+            url = item.videoUrl
         }else{
             url = activity?.intent?.getStringExtra("url").toString()
         }
 
         setUpPlayer()
 
-        play(title, url)
+        play(item.title, url)
     }
 
     override fun onPause() {
