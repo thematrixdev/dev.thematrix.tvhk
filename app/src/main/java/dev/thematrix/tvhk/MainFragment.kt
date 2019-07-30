@@ -1,6 +1,9 @@
 package dev.thematrix.tvhk
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context.CLIPBOARD_SERVICE
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,7 +20,6 @@ class MainFragment : BrowseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         setupUIElements()
-
         setupNetwork()
         detectLocation()
     }
@@ -43,6 +45,8 @@ class MainFragment : BrowseFragment() {
         setupEventListeners()
 
         restoreState()
+
+        clipboardManager = activity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
     }
 
     private fun setupUIElements() {
@@ -287,6 +291,11 @@ class MainFragment : BrowseFragment() {
                 url = item.videoUrl
             }
 
+            if (MainActivity.copyUrlToClipboard == MainActivity.doCopyUrlToClipboard){
+                clipboardManager.setPrimaryClip(ClipData.newPlainText(null, url))
+                Toast.makeText(activity, "已複製播放網址", Toast.LENGTH_SHORT).show()
+            }
+
             if(MainActivity.playerType == MainActivity.playerUseExternal){
                 val intent: Intent = Uri.parse(url).let { uri->
                     Intent(Intent.ACTION_VIEW, uri)
@@ -333,6 +342,7 @@ class MainFragment : BrowseFragment() {
         private lateinit var requestQueue: RequestQueue
         private lateinit var location: String
         var currentVideoID = -1
+        private lateinit var clipboardManager: ClipboardManager
         private var lastDirection = "NEXT"
     }
 }

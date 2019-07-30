@@ -179,28 +179,56 @@ class MainActivity : Activity() {
     }
 
     private fun handlePreferences(){
-        playerType = SharedPreference(this).getInt("playerType")
-        if(playerType == -1){
-            val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
-            builder.setTitle("選擇播放器")
-            builder.setMessage("Android 5 或以上用戶，建議使用內置播放器。Android 4 用戶如遇到不能播放的頻道，建議使用外置播放器 (推薦 MX Player)。使用外置播放器將不能使用方向鍵轉台。如不確定，遲下再講，試用內置播放器。")
+        lastShownDialog++
 
-            builder.setPositiveButton("內置播放器") { dialog, which ->
-                playerType = playerUseInternal
-                SharedPreference(this).saveInt("playerType", playerType)
+        if (lastShownDialog == 0) {
+            playerType = SharedPreference(this).getInt("playerType")
+            if (playerType == -1) {
+                val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+                builder.setTitle("選擇播放器")
+                builder.setMessage("Android 5 或以上用戶，建議使用內置播放器。Android 4 用戶如遇到不能播放的頻道，建議使用外置播放器 (推薦 MX Player)。使用外置播放器將不能使用方向鍵轉台。如不確定，遲下再講，試用內置播放器。")
+
+                builder.setPositiveButton("內置播放器") { dialog, which ->
+                    playerType = playerUseInternal
+                    SharedPreference(this).saveInt("playerType", playerType)
+                    handlePreferences()
+                }
+
+                builder.setNegativeButton("外置播放器") { dialog, which ->
+                    playerType = playerUseExternal
+                    SharedPreference(this).saveInt("playerType", playerType)
+                    handlePreferences()
+                }
+
+                builder.setNeutralButton("遲下再講") { dialog, which ->
+                    playerType = playerUseUnknown
+                    SharedPreference(this).saveInt("playerType", playerType)
+                    handlePreferences()
+                }
+
+                builder.show()
             }
+        } else if (lastShownDialog == 1) {
+            copyUrlToClipboard = SharedPreference(this).getInt("copyUrlToClipboard")
+            if (copyUrlToClipboard == -1) {
+                val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+                builder.setTitle("複製播放網址")
+                builder.setMessage("你想每次播放都複製播放網址到剪貼簿嗎？")
 
-            builder.setNegativeButton("外置播放器") { dialog, which ->
-                playerType = playerUseExternal
-                SharedPreference(this).saveInt("playerType", playerType)
+                builder.setPositiveButton("好") { dialog, which ->
+                    copyUrlToClipboard = doCopyUrlToClipboard
+                    SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
+                    handlePreferences()
+                }
+
+                builder.setNegativeButton("不了") { dialog, which ->
+                    copyUrlToClipboard = dontCopyUrlToClipboard
+                    SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
+                    handlePreferences()
+                }
+
+                builder.show()
             }
-
-            builder.setNeutralButton("遲下再講") { dialog, which ->
-                playerType = playerUseUnknown
-                SharedPreference(this).saveInt("playerType", playerType)
-            }
-
-            builder.show()
         }
     }
 
@@ -213,9 +241,15 @@ class MainActivity : Activity() {
         private lateinit var downloadManager: DownloadManager
         private var downloadId: Long = -1
 
+        var lastShownDialog: Int = -1
+
         var playerType: Int = -1
-        var playerUseUnknown: Int = -1
-        var playerUseInternal: Int = 0
-        var playerUseExternal: Int = 1
+        val playerUseUnknown: Int = -1
+        val playerUseInternal: Int = 0
+        val playerUseExternal: Int = 1
+
+        var copyUrlToClipboard: Int = -1
+        val doCopyUrlToClipboard: Int = 0
+        val dontCopyUrlToClipboard: Int = 1
     }
 }
