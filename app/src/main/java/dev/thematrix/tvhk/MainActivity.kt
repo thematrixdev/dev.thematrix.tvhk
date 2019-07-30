@@ -186,7 +186,14 @@ class MainActivity : Activity() {
             if (playerType == -1) {
                 val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
                 builder.setTitle("選擇播放器")
-                builder.setMessage("Android 5 或以上用戶，建議使用內置播放器。Android 4 用戶如遇到不能播放的頻道，建議使用外置播放器 (推薦 MX Player)。使用外置播放器將不能使用方向鍵轉台。如不確定，遲下再講，試用內置播放器。")
+                builder.setMessage("內置播放器：可用方向掣轉台、載入速度較快\n" +
+                        "\n" +
+                        "外置播放器：可用幾乎任何嘅播放器。建議使用MX Player\n" +
+                        "\n" +
+                        "注意：Android 4用家如內置播放器唔正常運作，請揀外置播放器\n" +
+                        "\n" +
+                        "建議：先唔選擇，使用預設內置播放器，用唔到先再揀外置播放器"
+                )
 
                 builder.setPositiveButton("內置播放器") { dialog, which ->
                     playerType = playerUseInternal
