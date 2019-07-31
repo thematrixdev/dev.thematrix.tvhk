@@ -168,14 +168,14 @@ class MainFragment : BrowseFragment() {
             val params = JSONObject()
 
             if(item.func.equals("viutv99")){
-                url = "https://api.viu.now.com/p8/2/getLiveURL"
+                url = handleUrl("https://api.viu.now.com/p8/2/getLiveURL")
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
             }else{
-                url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
+                url = handleUrl("https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL")
 
                 if(item.func.equals("nowtv332")){
                     params.put("channelno", "332")
@@ -210,7 +210,7 @@ class MainFragment : BrowseFragment() {
 
             requestQueue.add(jsonObjectRequest)
         }else if(item.func.equals("cabletv109") || item.func.equals("cabletv110")){
-            url = "https://mobileapp.i-cable.com/iCableMobile/API/api.php"
+            url = handleUrl("https://mobileapp.i-cable.com/iCableMobile/API/api.php")
 
             val stringRequest = object: StringRequest(
                 Method.POST,
@@ -272,6 +272,37 @@ class MainFragment : BrowseFragment() {
 
             requestQueue.add(stringRequest)
         }
+    }
+
+    private fun handleUrl(url: String): String{
+        if(!MainActivity.tlsVersionSet && SDK_VER < 21){
+            return url.replace("https://", "http://")
+        }else{
+            return url
+        }
+    }
+
+    private fun touchUrl(item: Movie, url: String){
+        val stringRequest = object: StringRequest(
+            Method.GET,
+            handleUrl(url),
+            Response.Listener { response ->
+                try {
+                    play(item, handleUrl(url.split('?')[0]))
+                }catch (exception: Exception){
+                    showPlaybackErrorMessage("TOUCH" + item.title)
+                }
+            },
+            Response.ErrorListener{ error ->
+                showPlaybackErrorMessage("TOUCH ERROR" + item.title)
+            }
+        ){
+            override fun getRetryPolicy(): RetryPolicy {
+                return DefaultRetryPolicy(DefaultRetryPolicy.DEFAULT_TIMEOUT_MS * 5, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+            }
+        }
+
+        requestQueue.add(stringRequest)
     }
 
     private fun showPlaybackErrorMessage(title: String){
@@ -339,6 +370,7 @@ class MainFragment : BrowseFragment() {
     }
 
     companion object {
+        private val SDK_VER = android.os.Build.VERSION.SDK_INT
         private lateinit var requestQueue: RequestQueue
         private lateinit var location: String
         var currentVideoID = -1

@@ -39,8 +39,17 @@ class MainActivity : Activity() {
 
         ctx = this
 
+        detectPlayStore()
         setupNetwork()
         initialize()
+    }
+
+    private fun detectPlayStore(){
+        try {
+            packageManager.getPackageInfo("com.android.vending", 0)
+        } catch (e: PackageManager.NameNotFoundException) {
+            hasPlaystore = false
+        }
     }
 
     private fun setupNetwork(){
@@ -52,6 +61,8 @@ class MainActivity : Activity() {
                 sslContext!!.init(null, null, null)
                 val engine = sslContext.createSSLEngine()
                 engine.enabledCipherSuites
+
+                tlsVersionSet = true
             } catch (e: KeyManagementException) {
             }
         } catch (e: NoSuchAlgorithmException) {
@@ -243,6 +254,8 @@ class MainActivity : Activity() {
         lateinit var ctx: Context
 
         private var hasPlaystore: Boolean = true
+        var tlsVersionSet: Boolean = false
+
         private val permissionRequestCode = 689777
         private var hasPermission: Boolean = false
         private lateinit var downloadManager: DownloadManager
