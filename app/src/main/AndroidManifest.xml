@@ -36,9 +36,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".PlaybackActivity"
-            android:screenOrientation="sensor">
+        <activity android:name=".PlaybackActivity">
         </activity>
 
         <provider
