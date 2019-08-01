@@ -148,7 +148,7 @@ class MainFragment : BrowseFragment() {
     fun prepareVideo(item: Movie){
         currentVideoID = item.id
 
-        if(MainActivity.playerType != MainActivity.playerUseInternal){
+        if(MainActivity.playerType != MainActivity.playerUseUnknown){
             SharedPreference(activity).saveInt("currentVideoID", currentVideoID)
         }
 
@@ -168,14 +168,14 @@ class MainFragment : BrowseFragment() {
             val params = JSONObject()
 
             if(item.func.equals("viutv99")){
-                url = handleUrl("https://api.viu.now.com/p8/2/getLiveURL")
+                url = "https://api.viu.now.com/p8/2/getLiveURL"
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
             }else{
-                url = handleUrl("https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL")
+                url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
 
                 if(item.func.equals("nowtv332")){
                     params.put("channelno", "332")
