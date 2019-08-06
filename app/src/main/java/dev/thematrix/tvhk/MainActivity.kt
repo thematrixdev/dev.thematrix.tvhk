@@ -256,7 +256,7 @@ class MainActivity : Activity() {
         private var hasPlaystore: Boolean = true
         var tlsVersionSet: Boolean = false
 
-        private val permissionRequestCode = 689777
+        private val permissionRequestCode = 1
         private var hasPermission: Boolean = false
         private lateinit var downloadManager: DownloadManager
         private var downloadId: Long = -1
