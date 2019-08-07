@@ -44,6 +44,12 @@ class MainActivity : Activity() {
         initialize()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        lastShownDialog = -1
+    }
+
     private fun detectPlayStore(){
         try {
             packageManager.getPackageInfo("com.android.vending", 0)
@@ -164,6 +170,36 @@ class MainActivity : Activity() {
         lastShownDialog++
 
         if (lastShownDialog == 0) {
+            val readme = SharedPreference(this).getInt("readme")
+            if (readme == -1){
+                val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+                builder.setTitle("請注意")
+                builder.setMessage("- 只可用係非謀利用途\n" +
+                        "- 香港地區以外可能睇唔到部份台\n" +
+                        "- 呢個app係設計俾Android-TV嘅電視或機頂盒使用。Android嘅手機及機頂盒，有可能出現各種問題。\n" +
+                        "- 高清廣播，請自行注意網絡用量！\n" +
+                        "- 呢個app只提供公眾免費頻道\n" +
+                        "- 所有出現嘅商標都屬於各公司所有\n" +
+                        "- 我地同各公司無任何關係\n" +
+                        "- 如果各公司認為我地有侵權，請搵我剷返走你地個台"
+                )
+
+                builder.setPositiveButton("好") { dialog, which ->
+                    SharedPreference(this).saveInt("readme", 1)
+                    initialize()
+                }
+
+                builder.setNegativeButton("不了") { dialog, which ->
+                    bye9bye()
+                }
+
+                builder.setCancelable(false)
+
+                builder.show()
+            }else{
+                initialize()
+            }
+        }else if (lastShownDialog == 1) {
             if(hasPlaystore) {
                 initialize()
             }else{
@@ -189,10 +225,12 @@ class MainActivity : Activity() {
                         initialize()
                     }
 
+                    builder.setCancelable(false)
+
                     builder.show()
                 }
             }
-        }else if (lastShownDialog == 1) {
+        }else if (lastShownDialog == 2) {
             playerType = SharedPreference(this).getInt("playerType")
             if (playerType == -1) {
                 val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
@@ -224,9 +262,11 @@ class MainActivity : Activity() {
                     initialize()
                 }
 
+                builder.setCancelable(false)
+
                 builder.show()
             }
-        } else if (lastShownDialog == 2) {
+        } else if (lastShownDialog == 3) {
             copyUrlToClipboard = SharedPreference(this).getInt("copyUrlToClipboard")
             if (copyUrlToClipboard == -1) {
                 val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
@@ -245,13 +285,24 @@ class MainActivity : Activity() {
                     initialize()
                 }
 
+                builder.setCancelable(false)
+
                 builder.show()
             }
         }
     }
 
+    private fun bye9bye() {
+        if (SDK_VER >= 21) {
+            finishAndRemoveTask()
+        } else {
+            finishAffinity()
+        }
+    }
+
     companion object {
         lateinit var ctx: Context
+        private val SDK_VER = Build.VERSION.SDK_INT
 
         private var hasPlaystore: Boolean = true
         var tlsVersionSet: Boolean = false

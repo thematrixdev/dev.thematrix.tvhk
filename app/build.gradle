@@ -11,8 +11,8 @@ android {
         applicationId "dev.thematrix.tvhk"
         minSdkVersion 17
         targetSdkVersion 29
-        versionCode 20
-        versionName "20"
+        versionCode 21
+        versionName "21"
     }
     buildTypes {
         release {
