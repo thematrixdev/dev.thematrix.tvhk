@@ -3,15 +3,15 @@ package dev.thematrix.tvhk
 import android.Manifest
 import android.app.Activity
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.widget.AdapterView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,13 +20,11 @@ import androidx.core.content.FileProvider
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
-import com.android.volley.toolbox.BasicNetwork
-import com.android.volley.toolbox.HurlStack
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.NoCache
+import com.android.volley.toolbox.*
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.security.ProviderInstaller
+import kotlinx.android.synthetic.main.layout_phone.*
 import java.io.File
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
@@ -35,19 +33,56 @@ import javax.net.ssl.SSLContext
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         ctx = this
+        TVHandler.activity = this
 
-        detectPlayStore()
-        setupNetwork()
+        clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        lastInitializationStep = -1
+        lastShownDialog = -1
+        initialized = false
         initialize()
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
 
-        lastShownDialog = -1
+        if(requestCode == 0 && resultCode == Activity.RESULT_OK){
+            val action = data!!.getStringExtra("action")
+
+            if (action == "switch") {
+                val direction = data.getStringExtra("direction")
+                val showMessage = data.getBooleanExtra("showMessage", false)
+                TVHandler().channelSwitch(direction, showMessage)
+            } else if (action == "restore") {
+                TVHandler().prepareVideo(MovieList.list[TVHandler.currentVideoID])
+            } else {
+                showLayout()
+            }
+        }
+    }
+
+    private fun initialize(){
+        lastInitializationStep++
+
+        if (lastInitializationStep == 0) {
+            detectPlayStore()
+            initialize()
+        } else if (lastInitializationStep == 1) {
+            setupNetwork()
+            initialize()
+        } else if (lastInitializationStep == 2) {
+            detectLocation()
+        } else if (lastInitializationStep == 3) {
+            showLayout()
+            initialize()
+        } else if (lastInitializationStep == 4) {
+            showUserInteraction()
+        } else {
+            restoreState()
+            initialized = true
+        }
     }
 
     private fun detectPlayStore(){
@@ -76,6 +111,10 @@ class MainActivity : Activity() {
             hasPlaystore = false
         } catch (e: GooglePlayServicesRepairableException) {
             hasPlaystore = false
+        }
+
+        requestQueue = RequestQueue(NoCache(), BasicNetwork(HurlStack())).apply {
+            start()
         }
     }
 
@@ -112,16 +151,12 @@ class MainActivity : Activity() {
 
                     builder.show()
                 }else{
-                    initialize()
+                    showUserInteraction()
                 }
             },
             Response.ErrorListener{ error ->
             }
         )
-
-        val requestQueue = RequestQueue(NoCache(), BasicNetwork(HurlStack())).apply {
-            start()
-        }
 
         requestQueue.add(jsonObjectRequest)
     }
@@ -166,7 +201,31 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun initialize() {
+    private fun detectLocation(){
+        Toast.makeText(ctx, "偵測IP地址所屬地區中...", Toast.LENGTH_LONG).show()
+
+        val stringRequest = object: StringRequest(
+            Method.GET,
+            "https://ifconfig.co/country-iso",
+            Response.Listener { response ->
+                location = response.trim()
+
+                if (location != "HK") {
+                    Toast.makeText(ctx, "偵測所屬地區不在香港\n部分頻道因無法播放已被隱藏", Toast.LENGTH_LONG).show()
+                }
+
+                initialize()
+            },
+            Response.ErrorListener{ error ->
+                location = ""
+                initialize()
+            }
+        ){}
+
+        requestQueue.add(stringRequest)
+    }
+
+    private fun showUserInteraction() {
         lastShownDialog++
 
         if (lastShownDialog == 0) {
@@ -186,7 +245,7 @@ class MainActivity : Activity() {
 
                 builder.setPositiveButton("好") { dialog, which ->
                     SharedPreference(this).saveInt("readme", 1)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setNegativeButton("不了") { dialog, which ->
@@ -197,11 +256,11 @@ class MainActivity : Activity() {
 
                 builder.show()
             }else{
-                initialize()
+                showUserInteraction()
             }
         }else if (lastShownDialog == 1) {
             if(hasPlaystore) {
-                initialize()
+                showUserInteraction()
             }else{
                 val PERM_READ_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 val PERM_WRITE_EXTERNAL_STORAGE = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -222,7 +281,7 @@ class MainActivity : Activity() {
                     }
 
                     builder.setNegativeButton("不了") { dialog, which ->
-                        initialize()
+                        showUserInteraction()
                     }
 
                     builder.setCancelable(false)
@@ -247,24 +306,26 @@ class MainActivity : Activity() {
                 builder.setPositiveButton("內置播放器") { dialog, which ->
                     playerType = playerUseInternal
                     SharedPreference(this).saveInt("playerType", playerType)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setNegativeButton("外置播放器") { dialog, which ->
                     playerType = playerUseExternal
                     SharedPreference(this).saveInt("playerType", playerType)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setNeutralButton("遲下再講") { dialog, which ->
                     playerType = playerUseUnknown
                     SharedPreference(this).saveInt("playerType", playerType)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setCancelable(false)
 
                 builder.show()
+            } else {
+                showUserInteraction()
             }
         } else if (lastShownDialog == 3) {
             copyUrlToClipboard = SharedPreference(this).getInt("copyUrlToClipboard")
@@ -276,19 +337,23 @@ class MainActivity : Activity() {
                 builder.setPositiveButton("好") { dialog, which ->
                     copyUrlToClipboard = doCopyUrlToClipboard
                     SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setNegativeButton("不了") { dialog, which ->
                     copyUrlToClipboard = dontCopyUrlToClipboard
                     SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
-                    initialize()
+                    showUserInteraction()
                 }
 
                 builder.setCancelable(false)
 
                 builder.show()
+            } else {
+                showUserInteraction()
             }
+        } else {
+            initialize()
         }
     }
 
@@ -300,9 +365,51 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun showLayout() {
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            if (!initialized) {
+                setContentView(R.layout.layout_tv)
+            }
+        } else {
+            setContentView(R.layout.layout_phone)
+
+            var numColumn: Int = 1
+            if (this@MainActivity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                numColumn = 3
+            }else if (this@MainActivity.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                numColumn = 2
+            }
+            gridviewMovie.numColumns = numColumn
+
+            gridviewMovie.adapter = MovieAdapter(this@MainActivity)
+            gridviewMovie.onItemClickListener = AdapterView.OnItemClickListener { adapterView, view, i, l ->
+                TVHandler().prepareVideo(MovieList.list[i])
+            }
+        }
+    }
+
+    private fun restoreState() {
+        if (!restored && playerType > -1) {
+            val currentVideoID = SharedPreference(this).getInt("currentVideoID")
+
+            if (currentVideoID > -1) {
+                TVHandler().prepareVideo(MovieList.list[currentVideoID])
+            }
+
+            restored = true
+        }
+    }
+
     companion object {
         lateinit var ctx: Context
         private val SDK_VER = Build.VERSION.SDK_INT
+        private var initialized: Boolean = false
+        private var restored: Boolean = false
+
+        lateinit var clipboardManager: ClipboardManager
+
+        lateinit var requestQueue: RequestQueue
+        lateinit var location: String
 
         private var hasPlaystore: Boolean = true
         var tlsVersionSet: Boolean = false
@@ -312,6 +419,7 @@ class MainActivity : Activity() {
         private lateinit var downloadManager: DownloadManager
         private var downloadId: Long = -1
 
+        var lastInitializationStep: Int = -1
         var lastShownDialog: Int = -1
 
         var playerType: Int = -1
