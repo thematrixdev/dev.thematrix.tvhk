@@ -91,19 +91,25 @@ object MovieList {
             false
         )
 
-        val list = title.indices.map {
-            buildMovieInfo(
-                categoryId[it],
-                title[it],
-                description[it],
-                cardImageUrl[it],
-                videoUrl[it],
-                func[it],
-                hongkongonly[it]
+        var l: MutableList<Movie> = mutableListOf<Movie>()
+
+        for (i in 0 until title.size) {
+            var m = buildMovieInfo(
+                categoryId[i],
+                title[i],
+                description[i],
+                cardImageUrl[i],
+                videoUrl[i],
+                func[i],
+                hongkongonly[i]
             )
+
+            if (m != null) {
+                l.add(m)
+            }
         }
 
-        return list
+        return l
     }
 
     private fun buildMovieInfo(
@@ -114,18 +120,25 @@ object MovieList {
         videoUrl: String,
         func: String,
         hongkongonly: Boolean
-    ): Movie {
-        val movie = Movie()
+    ): Movie? {
+        if (
+            !hongkongonly ||
+            (hongkongonly && (MainActivity.location == "HK" || MainActivity.location == ""))
+        ) {
+            val movie = Movie()
 
-        movie.id = count++
-        movie.categoryId = categoryId
-        movie.title = title
-        movie.description = description
-        movie.cardImageUrl = cardImageUrl
-        movie.videoUrl = videoUrl
-        movie.func = func
-        movie.hongkongonly = hongkongonly
+            movie.id = count++
+            movie.categoryId = categoryId
+            movie.title = title
+            movie.description = description
+            movie.cardImageUrl = cardImageUrl
+            movie.videoUrl = videoUrl
+            movie.func = func
+            movie.hongkongonly = hongkongonly
 
-        return movie
+            return movie
+        } else {
+            return null
+        }
     }
 }
