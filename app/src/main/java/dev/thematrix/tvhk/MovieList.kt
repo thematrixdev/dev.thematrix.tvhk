@@ -18,6 +18,7 @@ object MovieList {
             0,
             0,
             0,
+            0,
             1,
             1,
             1,
@@ -29,6 +30,7 @@ object MovieList {
             "ViuTV",
             "now新聞台",
             "now直播台",
+            "now體育台",
             "香港開電視",
             "有線新聞台",
             "有線直播台",
@@ -37,6 +39,7 @@ object MovieList {
         )
 
         val description = arrayOf(
+            "",
             "",
             "",
             "",
@@ -51,6 +54,7 @@ object MovieList {
             "https://thematrix.dev/tvhk/viutv.jpg",
             "https://thematrix.dev/tvhk/nowtv.jpg",
             "https://thematrix.dev/tvhk/nowtv.jpg",
+            "https://thematrix.dev/tvhk/nowtv.jpg",
             "https://thematrix.dev/tvhk/opentv.jpg",
             "https://thematrix.dev/tvhk/cabletv.jpg",
             "https://thematrix.dev/tvhk/cabletv.jpg",
@@ -59,6 +63,7 @@ object MovieList {
         )
 
         val videoUrl = arrayOf(
+            "",
             "",
             "",
             "",
@@ -73,6 +78,7 @@ object MovieList {
             "viutv99",
             "nowtv332",
             "nowtv331",
+            "nowtv630",
             "",
             "cabletv109",
             "cabletv110",
@@ -84,6 +90,7 @@ object MovieList {
             true,
             false,
             false,
+            true,
             false,
             true,
             true,

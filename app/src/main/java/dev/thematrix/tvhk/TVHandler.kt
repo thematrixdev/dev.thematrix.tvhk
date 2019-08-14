@@ -14,6 +14,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import org.json.JSONArray
 import org.json.JSONObject
+import org.xml.sax.InputSource
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+
 
 class TVHandler{
     fun prepareVideo(item: Movie){
@@ -68,22 +72,22 @@ class TVHandler{
 
         lateinit var url: String
 
-        if(item.func.equals("viutv99") || item.func.equals("nowtv332") || item.func.equals("nowtv331")){
+        if(item.func.equals("viutv99") || item.func.equals("nowtv332") || item.func.equals("nowtv331")) {
             val params = JSONObject()
 
-            if(item.func.equals("viutv99")){
+            if (item.func.equals("viutv99")) {
                 url = "https://api.viu.now.com/p8/2/getLiveURL"
 
                 params.put("channelno", "099")
 
                 params.put("deviceId", "AndroidTV")
                 params.put("deviceType", "5")
-            }else{
+            } else {
                 url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
 
-                if(item.func.equals("nowtv332")){
+                if (item.func.equals("nowtv332")) {
                     params.put("channelno", "332")
-                }else if(item.func.equals("nowtv331")){
+                } else if (item.func.equals("nowtv331")) {
                     params.put("channelno", "331")
                 }
 
@@ -100,7 +104,56 @@ class TVHandler{
                 params,
                 Response.Listener { response ->
                     try {
-                        successfulCallback(item, JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0))
+                        successfulCallback(
+                            item,
+                            JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(
+                                0
+                            )
+                        )
+                    } catch (exception: Exception) {
+                        errorCallback(item.title)
+                    }
+                },
+                Response.ErrorListener { error ->
+                    errorCallback(item.title)
+                }
+            )
+
+            jsonObjectRequest.retryPolicy = DefaultRetryPolicy(
+                DefaultRetryPolicy.DEFAULT_TIMEOUT_MS * 5,
+                0,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+            )
+
+            MainActivity.requestQueue.add(jsonObjectRequest)
+        }else if(item.func.equals("nowtv630")){
+            url = handleUrl("https://sports.now.com/VideoCheckOut?pid=webch630_4&service=NOW360&type=channel")
+
+            val stringRequest = object: StringRequest(
+                Method.GET,
+                url,
+                Response.Listener { response ->
+                    try {
+                        var url: String = ""
+
+                        val factory = DocumentBuilderFactory.newInstance()
+                        val builder = factory.newDocumentBuilder()
+                        val source = InputSource(StringReader(response))
+                        val document = builder.parse(source)
+                        val nodes = document.getElementsByTagName("RESULT").item(0).childNodes
+
+                        for (i in 0 until nodes.length) {
+                            if (nodes.item(i).nodeName == "html5streamurlhq") {
+                                url = nodes.item(i).textContent
+                                break
+                            }
+                        }
+
+                        if (url != "") {
+                            successfulCallback(item, url)
+                        } else {
+                            errorCallback(item.title)
+                        }
                     }catch (exception: Exception){
                         errorCallback(item.title)
                     }
@@ -108,11 +161,22 @@ class TVHandler{
                 Response.ErrorListener{ error ->
                     errorCallback(item.title)
                 }
-            )
+            ){
+                override fun getRetryPolicy(): RetryPolicy {
+                    return DefaultRetryPolicy(DefaultRetryPolicy.DEFAULT_TIMEOUT_MS * 5, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+                }
 
-            jsonObjectRequest.retryPolicy = DefaultRetryPolicy(DefaultRetryPolicy.DEFAULT_TIMEOUT_MS * 5, 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT)
+                override fun getHeaders(): MutableMap<String, String> {
+                    val params =  mutableMapOf<String, String>()
 
-            MainActivity.requestQueue.add(jsonObjectRequest)
+//                    params.put("Referer", "https://sports.now.com/home/630")
+                    params.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; AndroidTV Build/35.0.A.1.282)")
+
+                    return params
+                }
+            }
+
+            MainActivity.requestQueue.add(stringRequest)
         }else if(item.func.equals("cabletv109") || item.func.equals("cabletv110")){
             url = handleUrl("https://mobileapp.i-cable.com/iCableMobile/API/api.php")
 
@@ -189,7 +253,7 @@ class TVHandler{
     private fun showPlaybackErrorMessage(title: String){
         Toast.makeText(MainActivity.ctx, title + " 暫時未能播放，請稍候再試。", Toast.LENGTH_SHORT).show()
 
-        if(MainActivity.playerType != MainActivity.playerUseExternal) {
+        if(MainActivity.isTV && MainActivity.playerType != MainActivity.playerUseExternal) {
             channelSwitch(lastDirection, false)
         }
     }

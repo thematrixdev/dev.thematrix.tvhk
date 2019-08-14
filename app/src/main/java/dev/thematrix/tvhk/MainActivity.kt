@@ -39,6 +39,8 @@ class MainActivity : Activity() {
 
         clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
+        isTV = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+
         lastInitializationStep = -1
         lastShownDialog = -1
         initialized = false
@@ -366,7 +368,7 @@ class MainActivity : Activity() {
     }
 
     private fun showLayout() {
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        if (isTV) {
             if (!initialized) {
                 setContentView(R.layout.layout_tv)
             }
@@ -389,7 +391,7 @@ class MainActivity : Activity() {
     }
 
     private fun restoreState() {
-        if (!restored && playerType > -1) {
+        if (isTV && !restored && playerType > -1) {
             val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
             if (currentVideoID > -1) {
@@ -403,6 +405,7 @@ class MainActivity : Activity() {
     companion object {
         lateinit var ctx: Context
         private val SDK_VER = Build.VERSION.SDK_INT
+        var isTV: Boolean = false
         private var initialized: Boolean = false
         private var restored: Boolean = false
 
