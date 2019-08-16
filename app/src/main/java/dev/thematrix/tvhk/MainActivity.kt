@@ -36,6 +36,7 @@ class MainActivity : Activity() {
 
         ctx = this
         TVHandler.activity = this
+        TVHandler.toast = Toast.makeText(this, "", Toast.LENGTH_SHORT)
 
         clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
@@ -49,6 +50,8 @@ class MainActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        TVHandler().unScheduleUrlUpdate()
 
         if(requestCode == 0 && resultCode == Activity.RESULT_OK){
             val action = data!!.getStringExtra("action")
@@ -368,6 +371,10 @@ class MainActivity : Activity() {
     }
 
     private fun showLayout() {
+//        val theme = super.getTheme()
+//        theme.applyStyle(R.style.tv, true)
+//        application.setTheme(R.style.tv)
+
         if (isTV) {
             if (!initialized) {
                 setContentView(R.layout.layout_tv)

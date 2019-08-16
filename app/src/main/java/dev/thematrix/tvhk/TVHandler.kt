@@ -16,8 +16,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.xml.sax.InputSource
 import java.io.StringReader
+import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
-
+import kotlin.concurrent.timerTask
 
 class TVHandler{
     fun prepareVideo(item: Movie){
@@ -45,7 +46,9 @@ class TVHandler{
 
             if (MainActivity.copyUrlToClipboard == MainActivity.doCopyUrlToClipboard){
                 MainActivity.clipboardManager.setPrimaryClip(ClipData.newPlainText(null, url))
-//                Toast.makeText(MainActivity.ctx, "已複製播放網址", Toast.LENGTH_SHORT).show()
+
+//                toast.setText("已複製播放網址")
+//                toast.show()
             }
 
             if(MainActivity.playerType == MainActivity.playerUseExternal){
@@ -62,7 +65,8 @@ class TVHandler{
             }
         }catch (e: Exception){
             if(e.message.toString().indexOf("No Activity found to handle Intent") > -1){
-                Toast.makeText(activity, "請先安裝媒體播放器，建議使用 MX Player", Toast.LENGTH_SHORT).show()
+                toast.setText("請先安裝媒體播放器，建議使用 MX Player")
+                toast.show()
             }
         }
     }
@@ -110,6 +114,8 @@ class TVHandler{
                                 0
                             )
                         )
+
+                        scheduleUrlUpdate(item)
                     } catch (exception: Exception) {
                         errorCallback(item.title)
                     }
@@ -151,6 +157,7 @@ class TVHandler{
 
                         if (url != "") {
                             successfulCallback(item, url)
+                            scheduleUrlUpdate(item)
                         } else {
                             errorCallback(item.title)
                         }
@@ -186,6 +193,7 @@ class TVHandler{
                 Response.Listener { response ->
                     try {
                         successfulCallback(item, JSONObject(JSONObject(response).getString("result")).getString("stream"))
+                        scheduleUrlUpdate(item)
                     }catch (exception: Exception){
                         errorCallback(item.title)
                     }
@@ -251,11 +259,29 @@ class TVHandler{
     }
 
     private fun showPlaybackErrorMessage(title: String){
-        Toast.makeText(MainActivity.ctx, title + " 暫時未能播放，請稍候再試。", Toast.LENGTH_SHORT).show()
+        toast.setText(title + " 暫時未能播放，請稍候再試。")
+        toast.show()
 
         if(MainActivity.isTV && MainActivity.playerType != MainActivity.playerUseExternal) {
             channelSwitch(lastDirection, false)
         }
+    }
+
+    private fun scheduleUrlUpdate(item: Movie){
+        unScheduleUrlUpdate()
+
+        urlUpdateScheduler = Timer()
+        urlUpdateScheduler.schedule(timerTask {
+            toast.setText("UPDATING " + item.title)
+            toast.show()
+
+            getVideoUrl(item, ::play, ::showPlaybackErrorMessage)
+        }, 14400000)
+    }
+
+    fun unScheduleUrlUpdate(){
+        urlUpdateScheduler.cancel()
+        urlUpdateScheduler.purge()
     }
 
     fun channelSwitch(direction: String, showMessage: Boolean){
@@ -276,7 +302,8 @@ class TVHandler{
             id = 0
         }
 
-        Toast.makeText(activity, "正在轉台到 " + MovieList.list[id].title, Toast.LENGTH_SHORT).show()
+        toast.setText("正在轉台到 " + MovieList.list[id].title)
+        toast.show()
 
         prepareVideo(MovieList.list[id])
     }
@@ -285,6 +312,9 @@ class TVHandler{
         private val SDK_VER = android.os.Build.VERSION.SDK_INT
 
         lateinit var activity: Activity
+        lateinit var toast: Toast
+
+        var urlUpdateScheduler: Timer = Timer()
 
         var currentVideoID = -1
         var lastDirection = "NEXT"
