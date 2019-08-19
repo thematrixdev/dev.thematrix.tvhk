@@ -3,6 +3,7 @@ package dev.thematrix.tvhk
 import android.Manifest
 import android.app.Activity
 import android.app.DownloadManager
+import android.app.UiModeManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -32,15 +33,23 @@ import javax.net.ssl.SSLContext
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        isTV = (getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+
+        if (isTV) {
+            setTheme(R.style.tv)
+        } else {
+            setTheme(R.style.phone)
+        }
+
         super.onCreate(savedInstanceState)
+
+        this.setTheme(android.R.style.Theme_Black_NoTitleBar)
 
         ctx = this
         TVHandler.activity = this
         TVHandler.toast = Toast.makeText(this, "", Toast.LENGTH_SHORT)
 
         clipboardManager = this.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-
-        isTV = packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
 
         lastInitializationStep = -1
         lastShownDialog = -1
@@ -371,10 +380,6 @@ class MainActivity : Activity() {
     }
 
     private fun showLayout() {
-//        val theme = super.getTheme()
-//        theme.applyStyle(R.style.tv, true)
-//        application.setTheme(R.style.tv)
-
         if (isTV) {
             if (!initialized) {
                 setContentView(R.layout.layout_tv)
