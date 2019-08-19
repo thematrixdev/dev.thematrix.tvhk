@@ -44,6 +44,9 @@ class TVHandler{
                 url = item.videoUrl
             }
 
+            lastItem = item
+            lastUrl = url
+
             if (MainActivity.copyUrlToClipboard == MainActivity.doCopyUrlToClipboard){
                 MainActivity.clipboardManager.setPrimaryClip(ClipData.newPlainText(null, url))
 
@@ -84,7 +87,7 @@ class TVHandler{
 
                 params.put("channelno", "099")
 
-                params.put("deviceId", "AndroidTV")
+                params.put("deviceId", "TVHK")
                 params.put("deviceType", "5")
             } else {
                 url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
@@ -110,9 +113,7 @@ class TVHandler{
                     try {
                         successfulCallback(
                             item,
-                            JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(
-                                0
-                            )
+                            JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0)
                         )
 
                         scheduleUrlUpdate(item)
@@ -177,7 +178,7 @@ class TVHandler{
                     val params =  mutableMapOf<String, String>()
 
 //                    params.put("Referer", "https://sports.now.com/home/630")
-                    params.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; AndroidTV Build/35.0.A.1.282)")
+                    params.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; TVHK Build/35.0.A.1.282)")
 
                     return params
                 }
@@ -209,7 +210,7 @@ class TVHandler{
                 override fun getHeaders(): MutableMap<String, String> {
                     val params =  mutableMapOf<String, String>()
 
-                    params.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; AndroidTV Build/35.0.A.1.282)")
+                    params.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 6.0.1; TVHK Build/35.0.A.1.282)")
 
                     return params
                 }
@@ -239,7 +240,7 @@ class TVHandler{
                     params.put("version", "6.3.4")
                     params.put("osVersion", "23")
                     params.put("channel_id", "106")
-                    params.put("deviceModel", "AndroidTV")
+                    params.put("deviceModel", "TVHK")
                     params.put("type", "live")
 
                     return params
@@ -308,8 +309,12 @@ class TVHandler{
         prepareVideo(MovieList.list[id])
     }
 
+    fun restart(){
+        play(lastItem, lastUrl)
+    }
+
     companion object {
-        private val SDK_VER = android.os.Build.VERSION.SDK_INT
+        val SDK_VER = android.os.Build.VERSION.SDK_INT
 
         lateinit var activity: Activity
         lateinit var toast: Toast
@@ -317,6 +322,8 @@ class TVHandler{
         var urlUpdateScheduler: Timer = Timer()
 
         var currentVideoID = -1
+        lateinit var lastItem: Movie
+        lateinit var lastUrl: String
         var lastDirection = "NEXT"
     }
 }
