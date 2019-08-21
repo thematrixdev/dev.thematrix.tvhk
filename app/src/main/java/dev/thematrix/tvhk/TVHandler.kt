@@ -24,10 +24,6 @@ class TVHandler{
     fun prepareVideo(item: Movie){
         currentVideoID = item.id
 
-        if(MainActivity.playerType != MainActivity.playerUseUnknown){
-            SharedPreference(MainActivity.ctx).saveInt("currentVideoID", currentVideoID)
-        }
-
         if(item.videoUrl == ""){
             getVideoUrl(item, ::play, ::showPlaybackErrorMessage)
         }else{
@@ -87,7 +83,7 @@ class TVHandler{
 
                 params.put("channelno", "099")
 
-                params.put("deviceId", "TVHK")
+                params.put("deviceId", getRandomString(18))
                 params.put("deviceType", "5")
             } else {
                 url = "https://hkt-mobile-api.nowtv.now.com/09/1/getLiveURL"
@@ -107,13 +103,20 @@ class TVHandler{
 
             val jsonObjectRequest = JsonObjectRequest(
                 Request.Method.POST,
-                url,
+                handleUrl(url),
                 params,
                 Response.Listener { response ->
                     try {
+                        var u = JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0)
+
+                        if (item.func.equals("viutv99")) {
+                            u = handleUrl(u, true)
+                            Thread.sleep(3000)
+                        }
+
                         successfulCallback(
                             item,
-                            JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0)
+                            u
                         )
 
                         scheduleUrlUpdate(item)
@@ -251,10 +254,10 @@ class TVHandler{
         }
     }
 
-    private fun handleUrl(url: String): String{
-        if(!MainActivity.tlsVersionSet && SDK_VER < 21){
+    private fun handleUrl(url: String, force: Boolean = false): String{
+        if (force || !MainActivity.tlsVersionSet && SDK_VER < 21) {
             return url.replace("https://", "http://")
-        }else{
+        } else {
             return url
         }
     }
@@ -263,9 +266,9 @@ class TVHandler{
         toast.setText(title + " 暫時未能播放，請稍候再試。")
         toast.show()
 
-        if(MainActivity.isTV && MainActivity.playerType != MainActivity.playerUseExternal) {
-            channelSwitch(lastDirection, false)
-        }
+//        if(MainActivity.isTV && MainActivity.playerType != MainActivity.playerUseExternal) {
+//            channelSwitch(lastDirection, false)
+//        }
     }
 
     private fun scheduleUrlUpdate(item: Movie){
@@ -311,6 +314,16 @@ class TVHandler{
 
     fun restart(){
         play(lastItem, lastUrl)
+    }
+
+    fun getRandomString(len: Int): String{
+        val charPool : List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+        val randomString = (1..len)
+            .map { i -> kotlin.random.Random.nextInt(0, charPool.size) }
+            .map(charPool::get)
+            .joinToString("")
+
+        return randomString
     }
 
     companion object {

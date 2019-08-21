@@ -62,7 +62,7 @@ class MainActivity : Activity() {
 
         TVHandler().unScheduleUrlUpdate()
 
-        if(requestCode == 0 && resultCode == Activity.RESULT_OK){
+        if(requestCode == 0 && resultCode == RESULT_OK){
             val action = data!!.getStringExtra("action")
 
             if (action == "switch") {
@@ -407,6 +407,7 @@ class MainActivity : Activity() {
             val currentVideoID = SharedPreference(this).getInt("currentVideoID")
 
             if (currentVideoID > -1) {
+                SharedPreference(MainActivity.ctx).saveInt("currentVideoID", -1)
                 TVHandler().prepareVideo(MovieList.list[currentVideoID])
             }
 
