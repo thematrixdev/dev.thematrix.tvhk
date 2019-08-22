@@ -48,7 +48,6 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         mTransportControlGlue.title = title
         playerAdapter.setDataSource(Uri.parse(url))
         mTransportControlGlue.playWhenPrepared()
-        mTransportControlGlue.play()
     }
 
     companion object {
