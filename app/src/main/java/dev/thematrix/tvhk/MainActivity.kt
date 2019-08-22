@@ -344,25 +344,30 @@ class MainActivity : Activity() {
         } else if (lastShownDialog == 3) {
             copyUrlToClipboard = SharedPreference(this).getInt("copyUrlToClipboard")
             if (copyUrlToClipboard == -1) {
-                val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
-                builder.setTitle("複製播放網址")
-                builder.setMessage("你想每次播放都複製播放網址到剪貼簿嗎？")
+                if (!isTV) {
+                    val builder = AlertDialog.Builder(this, R.style.Theme_AppCompat_Dialog_Alert)
+                    builder.setTitle("複製播放網址")
+                    builder.setMessage("你想每次播放都複製播放網址到剪貼簿嗎？")
 
-                builder.setPositiveButton("好") { dialog, which ->
-                    copyUrlToClipboard = doCopyUrlToClipboard
-                    SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
+                    builder.setPositiveButton("好") { dialog, which ->
+                        copyUrlToClipboard = doCopyUrlToClipboard
+                        SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
+                        showUserInteraction()
+                    }
+
+                    builder.setNegativeButton("不了") { dialog, which ->
+                        copyUrlToClipboard = dontCopyUrlToClipboard
+                        SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
+                        showUserInteraction()
+                    }
+
+                    builder.setCancelable(false)
+
+                    builder.show()
+                } else {
+                    SharedPreference(this).saveInt("copyUrlToClipboard", dontCopyUrlToClipboard)
                     showUserInteraction()
                 }
-
-                builder.setNegativeButton("不了") { dialog, which ->
-                    copyUrlToClipboard = dontCopyUrlToClipboard
-                    SharedPreference(this).saveInt("copyUrlToClipboard", copyUrlToClipboard)
-                    showUserInteraction()
-                }
-
-                builder.setCancelable(false)
-
-                builder.show()
             } else {
                 showUserInteraction()
             }
