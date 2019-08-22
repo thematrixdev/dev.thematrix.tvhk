@@ -24,6 +24,10 @@ class TVHandler{
     fun prepareVideo(item: Movie){
         currentVideoID = item.id
 
+        if(MainActivity.playerType != MainActivity.playerUseUnknown){
+            SharedPreference(MainActivity.ctx).saveInt("currentVideoID", currentVideoID)
+        }
+
         if(item.videoUrl == ""){
             getVideoUrl(item, ::play, ::showPlaybackErrorMessage)
         }else{
@@ -107,16 +111,9 @@ class TVHandler{
                 params,
                 Response.Listener { response ->
                     try {
-                        var u = JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0)
-
-                        if (item.func.equals("viutv99")) {
-                            u = handleUrl(u, true)
-                            Thread.sleep(3000)
-                        }
-
                         successfulCallback(
                             item,
-                            u
+                            JSONArray(JSONObject(JSONObject(response.getString("asset")).getString("hls")).getString("adaptive")).getString(0)
                         )
 
                         scheduleUrlUpdate(item)
