@@ -24,9 +24,14 @@ class PlaybackActivity : FragmentActivity() {
         this.setTheme(android.R.style.Theme_Black_NoTitleBar_Fullscreen)
 
         if (savedInstanceState == null) {
+//            supportFragmentManager
+//                .beginTransaction()
+//                .replace(android.R.id.content, PlaybackVideoFragment())
+//                .commit()
+
             supportFragmentManager
                 .beginTransaction()
-                .replace(android.R.id.content, PlaybackVideoFragment())
+                .replace(android.R.id.content, PlaybackExoFragment())
                 .commit()
         }
 
